@@ -1,0 +1,887 @@
+GAME CATUR BUAT MAS GENDON
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paxley Chess</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .title {
+            font-size: 3.5rem;
+            background: linear-gradient(45deg, #ffd700, #ff8c00, #ff4500);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #e6e6e6;
+            margin-bottom: 30px;
+        }
+
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 40px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .board-container {
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .board-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            width: 560px;
+            height: 560px;
+            border: 15px solid #8B4513;
+            border-radius: 5px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .square {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .light {
+            background-color: #f0d9b5;
+        }
+
+        .dark {
+            background-color: #b58863;
+        }
+
+        .square.highlight::before {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: rgba(106, 190, 106, 0.6);
+            animation: pulse 1.5s infinite;
+        }
+
+        .square.selected {
+            background-color: rgba(255, 255, 0, 0.4);
+        }
+
+        .square.valid-move::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: rgba(106, 190, 106, 0.8);
+        }
+
+        .piece {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .piece.dragging {
+            transform: scale(1.2);
+            z-index: 100;
+        }
+
+        .coordinates {
+            position: absolute;
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.7);
+            font-weight: bold;
+        }
+
+        .file-coord {
+            bottom: -20px;
+        }
+
+        .rank-coord {
+            left: -20px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 300px;
+        }
+
+        .panel {
+            background: rgba(30, 30, 46, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel h2 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff8c00, #ff4500);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(255, 69, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(255, 69, 0, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #4a4a8a, #2c2c54);
+        }
+
+        .move-history {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .move-history::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .move-history::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.5);
+            border-radius: 3px;
+        }
+
+        .move-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .move {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .move.current {
+            background: rgba(255, 215, 0, 0.2);
+            border-left: 3px solid #ffd700;
+        }
+
+        .status {
+            font-size: 1.2rem;
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            margin-top: 10px;
+        }
+
+        .captured-pieces {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .theme-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn.active {
+            background: rgba(255, 215, 0, 0.3);
+            border-color: #ffd700;
+        }
+
+        .theme-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.7; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @media (max-width: 1100px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .board {
+                width: 400px;
+                height: 400px;
+            }
+            
+            .square {
+                font-size: 30px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .board {
+                width: 320px;
+                height: 320px;
+            }
+            
+            .square {
+                font-size: 24px;
+            }
+            
+            .title {
+                font-size: 2.5rem;
+            }
+        }
+
+        .flip-board {
+            margin-top: 15px;
+        }
+
+        .timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">PAXLEY CHESS</h1>
+        <p class="subtitle">Permainan Catur dengan Sentuhan Modern dan Animasi</p>
+    </div>
+
+    <div class="game-container">
+        <div class="board-container">
+            <div class="board" id="chessboard">
+                <!-- Papan catur akan di-generate oleh JavaScript -->
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="panel">
+                <h2>Kontrol Permainan</h2>
+                <button class="btn" id="newGame">
+                    <span>♛</span> Permainan Baru
+                </button>
+                <button class="btn btn-secondary" id="undoMove">
+                    <span>↶</span> Undo Langkah
+                </button>
+                <button class="btn btn-secondary flip-board" id="flipBoard">
+                    <span>↻</span> Putar Papan
+                </button>
+                
+                <div class="theme-selector">
+                    <button class="theme-btn active" data-theme="classic">Klasik</button>
+                    <button class="theme-btn" data-theme="modern">Modern</button>
+                    <button class="theme-btn" data-theme="dark">Gelap</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Status Permainan</h2>
+                <div class="status" id="gameStatus">Giliran Putih</div>
+                
+                <div class="timer">
+                    <div>Putih: <span id="whiteTime">10:00</span></div>
+                    <div>Hitam: <span id="blackTime">10:00</span></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Sejarah Langkah</h2>
+                <div class="move-history">
+                    <div class="move-list" id="moveHistory">
+                        <!-- Daftar langkah akan diisi oleh JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Bidak yang Ditangkap</h2>
+                <div class="captured-pieces" id="capturedWhite">
+                    <!-- Bidak putih yang ditangkap -->
+                </div>
+                <div class="captured-pieces" id="capturedBlack">
+                    <!-- Bidak hitam yang ditangkap -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inisialisasi variabel game
+            const boardElement = document.getElementById('chessboard');
+            const gameStatusElement = document.getElementById('gameStatus');
+            const moveHistoryElement = document.getElementById('moveHistory');
+            const capturedWhiteElement = document.getElementById('capturedWhite');
+            const capturedBlackElement = document.getElementById('capturedBlack');
+            const whiteTimeElement = document.getElementById('whiteTime');
+            const blackTimeElement = document.getElementById('blackTime');
+            
+            let board = [];
+            let currentPlayer = 'white';
+            let selectedPiece = null;
+            let validMoves = [];
+            let moveHistory = [];
+            let capturedPieces = { white: [], black: [] };
+            let gameOver = false;
+            let boardFlipped = false;
+            
+            // Inisialisasi papan catur
+            function initializeBoard() {
+                board = [
+                    ['br', 'bn', 'bb', 'bq', 'bk', 'bb', 'bn', 'br'],
+                    ['bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp', 'bp'],
+                    ['', '', '', '', '', '', '', ''],
+                    ['', '', '', '', '', '', '', ''],
+                    ['', '', '', '', '', '', '', ''],
+                    ['', '', '', '', '', '', '', ''],
+                    ['wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp', 'wp'],
+                    ['wr', 'wn', 'wb', 'wq', 'wk', 'wb', 'wn', 'wr']
+                ];
+                
+                renderBoard();
+                updateGameStatus();
+                moveHistory = [];
+                updateMoveHistory();
+                capturedPieces = { white: [], black: [] };
+                updateCapturedPieces();
+                gameOver = false;
+            }
+            
+            // Render papan catur
+            function renderBoard() {
+                boardElement.innerHTML = '';
+                
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const square = document.createElement('div');
+                        square.classList.add('square');
+                        square.classList.add((row + col) % 2 === 0 ? 'light' : 'dark');
+                        
+                        // Tambahkan koordinat
+                        if (row === 7) {
+                            const fileCoord = document.createElement('div');
+                            fileCoord.classList.add('coordinates', 'file-coord');
+                            fileCoord.textContent = String.fromCharCode(97 + col);
+                            square.appendChild(fileCoord);
+                        }
+                        
+                        if (col === 0) {
+                            const rankCoord = document.createElement('div');
+                            rankCoord.classList.add('coordinates', 'rank-coord');
+                            rankCoord.textContent = 8 - row;
+                            square.appendChild(rankCoord);
+                        }
+                        
+                        // Tambahkan bidak jika ada
+                        const piece = board[row][col];
+                        if (piece) {
+                            const pieceElement = document.createElement('div');
+                            pieceElement.classList.add('piece');
+                            pieceElement.textContent = getPieceSymbol(piece);
+                            pieceElement.dataset.piece = piece;
+                            pieceElement.dataset.row = row;
+                            pieceElement.dataset.col = col;
+                            square.appendChild(pieceElement);
+                            
+                            // Event listener untuk bidak
+                            pieceElement.addEventListener('click', handlePieceClick);
+                        }
+                        
+                        // Event listener untuk kotak
+                        square.addEventListener('click', handleSquareClick);
+                        
+                        // Atur ID kotak untuk referensi
+                        square.id = `square-${row}-${col}`;
+                        
+                        boardElement.appendChild(square);
+                    }
+                }
+                
+                // Terapkan flip jika diperlukan
+                if (boardFlipped) {
+                    boardElement.style.transform = 'rotate(180deg)';
+                } else {
+                    boardElement.style.transform = 'rotate(0deg)';
+                }
+            }
+            
+            // Dapatkan simbol Unicode untuk bidak
+            function getPieceSymbol(piece) {
+                const symbols = {
+                    'wp': '♙', 'wr': '♖', 'wn': '♘', 'wb': '♗', 'wq': '♕', 'wk': '♔',
+                    'bp': '♟', 'br': '♜', 'bn': '♞', 'bb': '♝', 'bq': '♛', 'bk': '♚'
+                };
+                return symbols[piece] || '';
+            }
+            
+            // Handle klik pada bidak
+            function handlePieceClick(event) {
+                if (gameOver) return;
+                
+                const piece = event.target;
+                const row = parseInt(piece.dataset.row);
+                const col = parseInt(piece.dataset.col);
+                const pieceCode = piece.dataset.piece;
+                
+                // Cek apakah bidak milik pemain saat ini
+                if ((currentPlayer === 'white' && pieceCode.startsWith('w')) || 
+                    (currentPlayer === 'black' && pieceCode.startsWith('b'))) {
+                    
+                    // Hapus seleksi sebelumnya
+                    clearHighlights();
+                    
+                    // Tandai bidak yang dipilih
+                    selectedPiece = { row, col, element: piece };
+                    piece.parentElement.classList.add('selected');
+                    
+                    // Dapatkan langkah yang valid (sederhana)
+                    validMoves = getValidMoves(row, col, pieceCode);
+                    
+                    // Tandai langkah yang valid
+                    validMoves.forEach(move => {
+                        const square = document.getElementById(`square-${move.row}-${move.col}`);
+                        if (square) {
+                            if (board[move.row][move.col]) {
+                                square.classList.add('valid-move');
+                            } else {
+                                square.classList.add('highlight');
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Handle klik pada kotak
+            function handleSquareClick(event) {
+                if (gameOver || !selectedPiece) return;
+                
+                const square = event.target.classList.contains('square') ? 
+                    event.target : event.target.parentElement;
+                
+                const idParts = square.id.split('-');
+                const row = parseInt(idParts[1]);
+                const col = parseInt(idParts[2]);
+                
+                // Cek apakah langkah valid
+                const isValidMove = validMoves.some(move => move.row === row && move.col === col);
+                
+                if (isValidMove) {
+                    // Simpan keadaan sebelum langkah untuk undo
+                    const previousState = {
+                        board: JSON.parse(JSON.stringify(board)),
+                        captured: JSON.parse(JSON.stringify(capturedPieces))
+                    };
+                    
+                    // Lakukan langkah
+                    makeMove(selectedPiece.row, selectedPiece.col, row, col);
+                    
+                    // Simpan dalam history
+                    moveHistory.push(previousState);
+                    updateMoveHistory();
+                    
+                    // Ganti pemain
+                    currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+                    updateGameStatus();
+                    
+                    // Hapus seleksi
+                    clearHighlights();
+                    selectedPiece = null;
+                    validMoves = [];
+                }
+            }
+            
+            // Lakukan langkah
+            function makeMove(fromRow, fromCol, toRow, toCol) {
+                const piece = board[fromRow][fromCol];
+                
+                // Cek jika ada bidak yang ditangkap
+                if (board[toRow][toCol]) {
+                    const capturedPiece = board[toRow][toCol];
+                    const color = capturedPiece.startsWith('w') ? 'white' : 'black';
+                    capturedPieces[color].push(capturedPiece);
+                    updateCapturedPieces();
+                }
+                
+                // Pindahkan bidak
+                board[toRow][toCol] = piece;
+                board[fromRow][fromCol] = '';
+                
+                // Render ulang papan
+                renderBoard();
+            }
+            
+            // Dapatkan langkah yang valid (sederhana)
+            function getValidMoves(row, col, piece) {
+                const moves = [];
+                const color = piece[0];
+                const type = piece[1];
+                
+                // Implementasi sederhana pergerakan bidak
+                switch(type) {
+                    case 'p': // Pawn
+                        const direction = color === 'w' ? -1 : 1;
+                        const startRow = color === 'w' ? 6 : 1;
+                        
+                        // Maju satu langkah
+                        if (isInBoard(row + direction, col) && !board[row + direction][col]) {
+                            moves.push({ row: row + direction, col });
+                            
+                            // Maju dua langkah dari posisi awal
+                            if (row === startRow && !board[row + 2 * direction][col]) {
+                                moves.push({ row: row + 2 * direction, col });
+                            }
+                        }
+                        
+                        // Menangkap diagonal
+                        for (let dc of [-1, 1]) {
+                            if (isInBoard(row + direction, col + dc) && 
+                                board[row + direction][col + dc] && 
+                                board[row + direction][col + dc][0] !== color) {
+                                moves.push({ row: row + direction, col: col + dc });
+                            }
+                        }
+                        break;
+                        
+                    case 'r': // Rook
+                        // Horizontal dan vertikal
+                        const rookDirections = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+                        for (let [dr, dc] of rookDirections) {
+                            let r = row + dr, c = col + dc;
+                            while (isInBoard(r, c)) {
+                                if (!board[r][c]) {
+                                    moves.push({ row: r, col: c });
+                                } else {
+                                    if (board[r][c][0] !== color) {
+                                        moves.push({ row: r, col: c });
+                                    }
+                                    break;
+                                }
+                                r += dr;
+                                c += dc;
+                            }
+                        }
+                        break;
+                        
+                    case 'n': // Knight
+                        const knightMoves = [
+                            [-2, -1], [-2, 1], [-1, -2], [-1, 2],
+                            [1, -2], [1, 2], [2, -1], [2, 1]
+                        ];
+                        for (let [dr, dc] of knightMoves) {
+                            const r = row + dr, c = col + dc;
+                            if (isInBoard(r, c) && (!board[r][c] || board[r][c][0] !== color)) {
+                                moves.push({ row: r, col: c });
+                            }
+                        }
+                        break;
+                        
+                    case 'b': // Bishop
+                        const bishopDirections = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+                        for (let [dr, dc] of bishopDirections) {
+                            let r = row + dr, c = col + dc;
+                            while (isInBoard(r, c)) {
+                                if (!board[r][c]) {
+                                    moves.push({ row: r, col: c });
+                                } else {
+                                    if (board[r][c][0] !== color) {
+                                        moves.push({ row: r, col: c });
+                                    }
+                                    break;
+                                }
+                                r += dr;
+                                c += dc;
+                            }
+                        }
+                        break;
+                        
+                    case 'q': // Queen (gabungan rook dan bishop)
+                        const queenDirections = [
+                            [0, 1], [1, 0], [0, -1], [-1, 0],
+                            [-1, -1], [-1, 1], [1, -1], [1, 1]
+                        ];
+                        for (let [dr, dc] of queenDirections) {
+                            let r = row + dr, c = col + dc;
+                            while (isInBoard(r, c)) {
+                                if (!board[r][c]) {
+                                    moves.push({ row: r, col: c });
+                                } else {
+                                    if (board[r][c][0] !== color) {
+                                        moves.push({ row: r, col: c });
+                                    }
+                                    break;
+                                }
+                                r += dr;
+                                c += dc;
+                            }
+                        }
+                        break;
+                        
+                    case 'k': // King
+                        const kingMoves = [
+                            [-1, -1], [-1, 0], [-1, 1],
+                            [0, -1],           [0, 1],
+                            [1, -1],  [1, 0],  [1, 1]
+                        ];
+                        for (let [dr, dc] of kingMoves) {
+                            const r = row + dr, c = col + dc;
+                            if (isInBoard(r, c) && (!board[r][c] || board[r][c][0] !== color)) {
+                                moves.push({ row: r, col: c });
+                            }
+                        }
+                        break;
+                }
+                
+                return moves;
+            }
+            
+            // Cek apakah posisi berada dalam papan
+            function isInBoard(row, col) {
+                return row >= 0 && row < 8 && col >= 0 && col < 8;
+            }
+            
+            // Hapus highlight dari papan
+            function clearHighlights() {
+                document.querySelectorAll('.square').forEach(square => {
+                    square.classList.remove('selected', 'highlight', 'valid-move');
+                });
+            }
+            
+            // Update status permainan
+            function updateGameStatus() {
+                gameStatusElement.textContent = `Giliran ${currentPlayer === 'white' ? 'Putih' : 'Hitam'}`;
+            }
+            
+            // Update history langkah
+            function updateMoveHistory() {
+                moveHistoryElement.innerHTML = '';
+                
+                for (let i = 0; i < moveHistory.length; i++) {
+                    const moveNumber = i + 1;
+                    const moveElement = document.createElement('div');
+                    moveElement.classList.add('move');
+                    moveElement.textContent = `${moveNumber}. [Langkah ${moveNumber}]`;
+                    
+                    if (i === moveHistory.length - 1) {
+                        moveElement.classList.add('current');
+                    }
+                    
+                    moveHistoryElement.appendChild(moveElement);
+                }
+                
+                // Scroll ke bawah
+                moveHistoryElement.scrollTop = moveHistoryElement.scrollHeight;
+            }
+            
+            // Update bidak yang ditangkap
+            function updateCapturedPieces() {
+                capturedWhiteElement.innerHTML = '';
+                capturedBlackElement.innerHTML = '';
+                
+                capturedPieces.white.forEach(piece => {
+                    const pieceElement = document.createElement('div');
+                    pieceElement.classList.add('piece');
+                    pieceElement.textContent = getPieceSymbol(piece);
+                    capturedWhiteElement.appendChild(pieceElement);
+                });
+                
+                capturedPieces.black.forEach(piece => {
+                    const pieceElement = document.createElement('div');
+                    pieceElement.classList.add('piece');
+                    pieceElement.textContent = getPieceSymbol(piece);
+                    capturedBlackElement.appendChild(pieceElement);
+                });
+            }
+            
+            // Undo langkah terakhir
+            function undoMove() {
+                if (moveHistory.length > 0) {
+                    const previousState = moveHistory.pop();
+                    board = previousState.board;
+                    capturedPieces = previousState.captured;
+                    
+                    currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+                    
+                    renderBoard();
+                    updateGameStatus();
+                    updateMoveHistory();
+                    updateCapturedPieces();
+                    
+                    clearHighlights();
+                    selectedPiece = null;
+                    validMoves = [];
+                }
+            }
+            
+            // Flip papan
+            function flipBoard() {
+                boardFlipped = !boardFlipped;
+                renderBoard();
+            }
+            
+            // Event listeners untuk tombol
+            document.getElementById('newGame').addEventListener('click', initializeBoard);
+            document.getElementById('undoMove').addEventListener('click', undoMove);
+            document.getElementById('flipBoard').addEventListener('click', flipBoard);
+            
+            // Event listeners untuk tema
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Terapkan tema (implementasi sederhana)
+                    const theme = this.dataset.theme;
+                    document.body.className = '';
+                    if (theme === 'modern') {
+                        document.body.style.background = 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)';
+                    } else if (theme === 'dark') {
+                        document.body.style.background = 'linear-gradient(135deg, #000000 0%, #434343 100%)';
+                    } else {
+                        document.body.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
+                    }
+                });
+            });
+            
+            // Timer sederhana
+            let whiteTime = 600; // 10 menit dalam detik
+            let blackTime = 600;
+            let timerInterval;
+            
+            function startTimer() {
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    if (currentPlayer === 'white') {
+                        whiteTime--;
+                    } else {
+                        blackTime--;
+                    }
+                    
+                    updateTimerDisplay();
+                    
+                    // Cek jika waktu habis
+                    if (whiteTime <= 0 || blackTime <= 0) {
+                        clearInterval(timerInterval);
+                        gameOver = true;
+                        gameStatusElement.textContent = `Waktu habis! ${whiteTime <= 0 ? 'Hitam' : 'Putih'} menang!`;
+                    }
+                }, 1000);
+            }
+            
+            function updateTimerDisplay() {
+                const formatTime = (seconds) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                };
+                
+                whiteTimeElement.textContent = formatTime(whiteTime);
+                blackTimeElement.textContent = formatTime(blackTime);
+            }
+            
+            // Inisialisasi permainan
+            initializeBoard();
+            startTimer();
+        });
+    </script>
+</body>
+</html>
+
+*SUMBER UTAMA :*     BENN PAXLEYY
+
+> AS FACHRI
